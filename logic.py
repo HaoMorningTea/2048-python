@@ -9,6 +9,9 @@
 import random
 import constants as c
 
+#gloabl variable to keep track of the score
+score = 0
+
 #######
 # Task 1a #
 #######
@@ -150,12 +153,15 @@ def cover_up(mat):
     return new, done
 
 def merge(mat, done):
+    global score
     for i in range(c.GRID_LEN):
         for j in range(c.GRID_LEN-1):
             if mat[i][j] == mat[i][j+1] and mat[i][j] != 0:
                 mat[i][j] *= 2
+                score += mat[i][j]
                 mat[i][j+1] = 0
                 done = True
+    print("Score: ", score)
     return mat, done
 
 def up(game):
