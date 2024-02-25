@@ -2,6 +2,7 @@ from tkinter import Frame, Label, CENTER
 import random
 import logic
 import constants as c
+import sqlite3
 
 def gen():
     return random.randint(0, c.GRID_LEN - 1)
@@ -35,6 +36,9 @@ class GameGrid(Frame):
         self.history_matrixs = []
         self.update_grid_cells()
 
+        self.conn = sqlite3.connect('game_data.db')
+        logic.set_conn(self.conn)  # Pass the connection to the logic module
+        logic.initialize_database()
         self.mainloop()
 
     def init_grid(self):
@@ -110,4 +114,9 @@ class GameGrid(Frame):
             index = (gen(), gen())
         self.matrix[index[0]][index[1]] = 2
 
+    def close_database(self):
+        self.conn.close()
+        
 game_grid = GameGrid()
+game_grid.close_database()
+

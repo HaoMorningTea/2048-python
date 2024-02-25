@@ -8,9 +8,33 @@
 
 import random
 import constants as c
+import sqlite3
 
 #gloabl variable to keep track of the score
 score = 0
+
+#connect to the database
+conn = None #to be created in the puzzle function
+
+def set_conn(connection):
+    global conn
+    conn = connection
+    
+def initialize_database():
+    # Initialize database and create table
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS game_moves (
+            move_id INTEGER PRIMARY KEY,
+            board_state TEXT,
+            move_type TEXT,
+            marginal_score_increase INTEGER
+        )
+    ''')
+
+    conn.commit()
+    cursor.close()
 
 #######
 # Task 1a #
@@ -164,40 +188,87 @@ def merge(mat, done):
     print("Score: ", score)
     return mat, done
 
+def marignal_score_increase(oldscore, score):
+    return score - oldscore
+
 def up(game):
+    global conn
     print("up")
+    oldscore = score
     # return matrix after shifting up
     game = transpose(game)
     game, done = cover_up(game)
     game, done = merge(game, done)
     game = cover_up(game)[0]
     game = transpose(game)
+    
+    # Insert data into the database
+    cursor = conn.cursor()  # Create a cursor
+    cursor.execute('''
+        INSERT INTO game_moves (board_state, move_type, marginal_score_increase)
+        VALUES (?, ?, ?)
+    ''', (str(game), 'up', marignal_score_increase(oldscore, score)))
+    conn.commit()
+    cursor.close()
     return game, done
 
 def down(game):
+    global conn
     print("down")
+    oldscore = score
     # return matrix after shifting down
     game = reverse(transpose(game))
     game, done = cover_up(game)
     game, done = merge(game, done)
     game = cover_up(game)[0]
     game = transpose(reverse(game))
+    
+    # Insert data into the database
+    cursor = conn.cursor()  # Create a cursor
+    cursor.execute('''
+        INSERT INTO game_moves (board_state, move_type, marginal_score_increase)
+        VALUES (?, ?, ?)
+    ''', (str(game), 'down', marignal_score_increase(oldscore, score)))
+    conn.commit()
+    cursor.close()
     return game, done
 
 def left(game):
+    global conn
     print("left")
+    oldscore = score
     # return matrix after shifting left
     game, done = cover_up(game)
     game, done = merge(game, done)
     game = cover_up(game)[0]
+    
+    # Insert data into the database
+    cursor = conn.cursor()  # Create a cursor
+    cursor.execute('''
+        INSERT INTO game_moves (board_state, move_type, marginal_score_increase)
+        VALUES (?, ?, ?)
+    ''', (str(game), 'left', marignal_score_increase(oldscore, score)))
+    conn.commit()
+    cursor.close()
     return game, done
 
 def right(game):
+    global conn
     print("right")
+    oldscore = score
     # return matrix after shifting right
     game = reverse(game)
     game, done = cover_up(game)
     game, done = merge(game, done)
     game = cover_up(game)[0]
     game = reverse(game)
+    
+    # Insert data into the database
+    cursor = conn.cursor()  # Create a cursor
+    cursor.execute('''
+        INSERT INTO game_moves (board_state, move_type, marginal_score_increase)
+        VALUES (?, ?, ?)
+    ''', (str(game), 'right', marignal_score_increase(oldscore, score)))
+    conn.commit()
+    cursor.close()
     return game, done
