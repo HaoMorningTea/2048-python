@@ -16,6 +16,9 @@ score = 0
 #connect to the database
 conn = None #to be created in the puzzle function
 
+#global variable to keep track of game state
+current_game_state = 'not over'
+
 def set_conn(connection):
     global conn
     conn = connection
@@ -29,7 +32,9 @@ def initialize_database():
             move_id INTEGER PRIMARY KEY,
             board_state TEXT,
             move_type TEXT,
-            marginal_score_increase INTEGER
+            marginal_score_increase INTEGER,
+            cumulative_score INTEGER,
+            game_state TEXT
         )
     ''')
 
@@ -84,30 +89,40 @@ def add_two(mat):
 # 3 marks for correct checking
 
 def game_state(mat):
+    global current_game_state
     # check for win cell
+    if(current_game_state == "lose"): return current_game_state
     for i in range(len(mat)):
         for j in range(len(mat[0])):
             if mat[i][j] == 2048:
-                return 'win'
+                current_game_state = 'win'
+                return current_game_state
     # check for any zero entries
     for i in range(len(mat)):
         for j in range(len(mat[0])):
             if mat[i][j] == 0:
-                return 'not over'
+                current_game_state = 'not over'
+                return current_game_state
     # check for same cells that touch each other
     for i in range(len(mat)-1):
         # intentionally reduced to check the row on the right and below
         # more elegant to use exceptions but most likely this will be their solution
         for j in range(len(mat[0])-1):
             if mat[i][j] == mat[i+1][j] or mat[i][j+1] == mat[i][j]:
-                return 'not over'
+                current_game_state = 'not over'
+                return current_game_state
     for k in range(len(mat)-1):  # to check the left/right entries on the last row
         if mat[len(mat)-1][k] == mat[len(mat)-1][k+1]:
-            return 'not over'
+            current_game_state = 'not over'
+            return current_game_state
     for j in range(len(mat)-1):  # check up/down entries on last column
         if mat[j][len(mat)-1] == mat[j+1][len(mat)-1]:
-            return 'not over'
-    return 'lose'
+            current_game_state = 'not over'
+            return current_game_state
+    
+    current_game_state = 'lose'
+    print("lose")
+    return current_game_state
 
 ###########
 # Task 2a #
@@ -205,9 +220,9 @@ def up(game):
     # Insert data into the database
     cursor = conn.cursor()  # Create a cursor
     cursor.execute('''
-        INSERT INTO game_moves (board_state, move_type, marginal_score_increase)
-        VALUES (?, ?, ?)
-    ''', (str(game), 'up', marignal_score_increase(oldscore, score)))
+        INSERT INTO game_moves (board_state, move_type, marginal_score_increase,cumulative_score,game_state)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (str(game), 'up', marignal_score_increase(oldscore, score), score, current_game_state))
     conn.commit()
     cursor.close()
     return game, done
@@ -226,14 +241,15 @@ def down(game):
     # Insert data into the database
     cursor = conn.cursor()  # Create a cursor
     cursor.execute('''
-        INSERT INTO game_moves (board_state, move_type, marginal_score_increase)
-        VALUES (?, ?, ?)
-    ''', (str(game), 'down', marignal_score_increase(oldscore, score)))
+        INSERT INTO game_moves (board_state, move_type, marginal_score_increase, cumulative_score, game_state)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (str(game), 'down', marignal_score_increase(oldscore, score), score, current_game_state))
     conn.commit()
     cursor.close()
     return game, done
 
 def left(game):
+    # global score
     global conn
     print("left")
     oldscore = score
@@ -245,14 +261,15 @@ def left(game):
     # Insert data into the database
     cursor = conn.cursor()  # Create a cursor
     cursor.execute('''
-        INSERT INTO game_moves (board_state, move_type, marginal_score_increase)
-        VALUES (?, ?, ?)
-    ''', (str(game), 'left', marignal_score_increase(oldscore, score)))
+        INSERT INTO game_moves (board_state, move_type, marginal_score_increase, cumulative_score, game_state)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (str(game), 'left', marignal_score_increase(oldscore, score), score, current_game_state) )
     conn.commit()
     cursor.close()
     return game, done
 
 def right(game):
+    # global score
     global conn
     print("right")
     oldscore = score
@@ -266,9 +283,9 @@ def right(game):
     # Insert data into the database
     cursor = conn.cursor()  # Create a cursor
     cursor.execute('''
-        INSERT INTO game_moves (board_state, move_type, marginal_score_increase)
-        VALUES (?, ?, ?)
-    ''', (str(game), 'right', marignal_score_increase(oldscore, score)))
+        INSERT INTO game_moves (board_state, move_type, marginal_score_increase, cumulative_score, game_state)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (str(game), 'right', marignal_score_increase(oldscore, score), score, current_game_state) )
     conn.commit()
     cursor.close()
     return game, done
